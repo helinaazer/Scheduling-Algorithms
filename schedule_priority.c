@@ -1,0 +1,63 @@
+/**
+ * CSS 430
+ * Project 3 - Priority Scheduling Algorithm
+ * Created by: Helina Azer
+ */
+
+#include "task.h"
+#include "cpu.h"
+#include "list.h"
+#include "schedulers.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+struct node *list = NULL;
+
+//function that adds the tasks to the list
+void add(char *name, int priority, int burst) {
+  Task *task = malloc(sizeof(Task));
+  task->name = malloc(sizeof(char) * (strlen(name) + 1));
+  strcpy(task->name, name);
+  task->priority = priority;
+  task->burst = burst;
+  insert(&list, task);
+}
+
+//function to compare the tasks so they can be sorted in lexicographical order
+bool comesBefore(char *a, char *b) { return strcmp(a, b) < 0; }
+
+//function that chooses which task to go next based on priority. Sorts based on Lexicographical order
+Task *pickNextTask() {
+    if (!list) {
+        return NULL;
+    }
+    struct node *temp = list;
+    Task *highest = temp->task;
+    while (temp != NULL) {
+      //if the priorities are the same, then go with lexicographical order
+      if (temp->task->priority == highest->priority) {
+        if (comesBefore(temp->task->name, highest->name)) {
+          highest = temp->task;
+        }
+      //if the priority of one task is greater, then do that task first
+      } else if (temp->task->priority > highest->priority) {
+        highest = temp->task;
+      }
+      temp = temp->next;
+    }
+    delete(&list, highest);
+    return highest;
+}
+
+//function that schedules the task to be printed.
+void schedule() {
+  int totalTime = 0;
+  while(list) {
+    Task *currentTask = pickNextTask();
+    run(currentTask, currentTask->burst);
+    totalTime += currentTask->burst;
+    printf("        Time is now: %d \n", totalTime);
+  }
+}
